@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 import openai
 import re
 import time
+from config import TABLE_PREFIX, RPC_PREFIX
 
 # Load OpenAI API key for embeddings
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -193,13 +194,13 @@ def add_documents_to_supabase(
     try:
         if unique_urls:
             # Use the .in_() filter to delete all records with matching URLs
-            client.table("crawled_pages").delete().in_("url", unique_urls).execute()
+            client.table(f"{TABLE_PREFIX}crawled_pages").delete().in_("url", unique_urls).execute()
     except Exception as e:
         print(f"Batch delete failed: {e}. Trying one-by-one deletion as fallback.")
         # Fallback: delete records one by one
         for url in unique_urls:
             try:
-                client.table("crawled_pages").delete().eq("url", url).execute()
+                client.table(f"{TABLE_PREFIX}crawled_pages").delete().eq("url", url).execute()
             except Exception as inner_e:
                 print(f"Error deleting record for URL {url}: {inner_e}")
                 # Continue with the next URL even if one fails
@@ -289,7 +290,7 @@ def add_documents_to_supabase(
         
         for retry in range(max_retries):
             try:
-                client.table("crawled_pages").insert(batch_data).execute()
+                client.table(f"{TABLE_PREFIX}crawled_pages").insert(batch_data).execute()
                 # Success - break out of retry loop
                 break
             except Exception as e:
@@ -306,7 +307,7 @@ def add_documents_to_supabase(
                     successful_inserts = 0
                     for record in batch_data:
                         try:
-                            client.table("crawled_pages").insert(record).execute()
+                            client.table(f"{TABLE_PREFIX}crawled_pages").insert(record).execute()
                             successful_inserts += 1
                         except Exception as individual_error:
                             print(f"Failed to insert individual record for URL {record['url']}: {individual_error}")
@@ -347,7 +348,7 @@ def search_documents(
         if filter_metadata:
             params['filter'] = filter_metadata  # Pass the dictionary directly, not JSON-encoded
         
-        result = client.rpc('match_crawled_pages', params).execute()
+        result = client.rpc(f'{RPC_PREFIX}match_crawled_pages', params).execute()
         
         return result.data
     except Exception as e:
@@ -513,7 +514,7 @@ def add_code_examples_to_supabase(
     unique_urls = list(set(urls))
     for url in unique_urls:
         try:
-            client.table('code_examples').delete().eq('url', url).execute()
+            client.table(f'{TABLE_PREFIX}code_examples').delete().eq('url', url).execute()
         except Exception as e:
             print(f"Error deleting existing code examples for {url}: {e}")
     
@@ -567,7 +568,7 @@ def add_code_examples_to_supabase(
         
         for retry in range(max_retries):
             try:
-                client.table('code_examples').insert(batch_data).execute()
+                client.table(f'{TABLE_PREFIX}code_examples').insert(batch_data).execute()
                 # Success - break out of retry loop
                 break
             except Exception as e:
@@ -584,7 +585,7 @@ def add_code_examples_to_supabase(
                     successful_inserts = 0
                     for record in batch_data:
                         try:
-                            client.table('code_examples').insert(record).execute()
+                            client.table(f'{TABLE_PREFIX}code_examples').insert(record).execute()
                             successful_inserts += 1
                         except Exception as individual_error:
                             print(f"Failed to insert individual record for URL {record['url']}: {individual_error}")
@@ -606,7 +607,7 @@ def update_source_info(client: Client, source_id: str, summary: str, word_count:
     """
     try:
         # Try to update existing source
-        result = client.table('sources').update({
+        result = client.table(f'{TABLE_PREFIX}sources').update({
             'summary': summary,
             'total_word_count': word_count,
             'updated_at': 'now()'
@@ -614,7 +615,7 @@ def update_source_info(client: Client, source_id: str, summary: str, word_count:
         
         # If no rows were updated, insert new source
         if not result.data:
-            client.table('sources').insert({
+            client.table(f'{TABLE_PREFIX}sources').insert({
                 'source_id': source_id,
                 'summary': summary,
                 'total_word_count': word_count
@@ -730,7 +731,7 @@ def search_code_examples(
         if source_id:
             params['source_filter'] = source_id
         
-        result = client.rpc('match_code_examples', params).execute()
+        result = client.rpc(f'{RPC_PREFIX}match_code_examples', params).execute()
         
         return result.data
     except Exception as e:
