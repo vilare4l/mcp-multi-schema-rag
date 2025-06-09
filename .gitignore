@@ -1,7 +1,8 @@
 .env
 .venv
 __pycache__
-crawl4ai_mcp.egg-infodocker-compose.yml
+crawl4ai_mcp.egg-info
+docker-compose.yml
 .env
 
 # Docker build artifacts
@@ -17,3 +18,4 @@ writing
 
 # Package manager
 uv.lock
+
