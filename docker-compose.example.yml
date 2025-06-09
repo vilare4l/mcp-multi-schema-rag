@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+ mcp-{DOMAIN}-management:
+   build: 
+     context: .
+     args:
+       PORT: 805X
+   container_name: mcp-{DOMAIN}-management
+   ports:
+     - "805X:805X"
+   environment:
+     - HOST=0.0.0.0
+     - PORT=805X
+     - TRANSPORT=sse
+     - SUPABASE_URL=${SUPABASE_URL}
+     - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+     - OPENAI_API_KEY=${OPENAI_API_KEY}
+     - TABLE_PREFIX=${TABLE_PREFIX}
+     - RPC_PREFIX=${RPC_PREFIX}
+   env_file:
+     - .env
+   networks:
+     - default
+   restart: unless-stopped
+
+networks:
+  default:
+    external: true

@@ -18,3 +18,10 @@ RPC_PREFIX=lean_
 # For construction schema  
 TABLE_PREFIX=construction_
 RPC_PREFIX=construction_
+
+## Setup Instructions
+
+1. **Copy configuration templates:**
+   ```bash
+   cp .env.example .env
+   cp docker-compose.example.yml docker-compose.yml

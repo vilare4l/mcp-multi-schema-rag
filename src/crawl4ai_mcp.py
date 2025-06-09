@@ -21,11 +21,8 @@ import json
 import os
 import re
 import concurrent.futures
-
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode, MemoryAdaptiveDispatcher
-
 from utils import (
-from config import TABLE_PREFIX
     get_supabase_client, 
     add_documents_to_supabase, 
     search_documents,
@@ -36,6 +33,9 @@ from config import TABLE_PREFIX
     extract_source_summary,
     search_code_examples
 )
+from config import TABLE_PREFIX
+    
+
 
 # Load environment variables from the project root .env file
 project_root = Path(__file__).resolve().parent.parent
