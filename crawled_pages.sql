@@ -2,12 +2,12 @@
 create extension if not exists vector;
 
 -- Drop tables if they exist (to allow rerunning the script)
-drop table if exists crawled_pages;
-drop table if exists code_examples;
-drop table if exists sources;
+drop table if exists {{PREFIX}}crawled_pages;
+drop table if exists {{PREFIX}}code_examples;
+drop table if exists {{PREFIX}}sources;
 
 -- Create the sources table
-create table sources (
+create table {{PREFIX}}sources (
     source_id text primary key,
     summary text,
     total_word_count integer default 0,
@@ -16,7 +16,7 @@ create table sources (
 );
 
 -- Create the documentation chunks table
-create table crawled_pages (
+create table {{PREFIX}}crawled_pages (
     id bigserial primary key,
     url varchar not null,
     chunk_number integer not null,
@@ -30,20 +30,20 @@ create table crawled_pages (
     unique(url, chunk_number),
     
     -- Add foreign key constraint to sources table
-    foreign key (source_id) references sources(source_id)
+    foreign key (source_id) references {{PREFIX}}sources(source_id)
 );
 
 -- Create an index for better vector similarity search performance
-create index on crawled_pages using ivfflat (embedding vector_cosine_ops);
+create index on {{PREFIX}}crawled_pages using ivfflat (embedding vector_cosine_ops);
 
 -- Create an index on metadata for faster filtering
-create index idx_crawled_pages_metadata on crawled_pages using gin (metadata);
+create index idx_{{PREFIX}}crawled_pages_metadata on {{PREFIX}}crawled_pages using gin (metadata);
 
 -- Create an index on source_id for faster filtering
-CREATE INDEX idx_crawled_pages_source_id ON crawled_pages (source_id);
+CREATE INDEX idx_{{PREFIX}}crawled_pages_source_id ON {{PREFIX}}crawled_pages (source_id);
 
 -- Create a function to search for documentation chunks
-create or replace function match_crawled_pages (
+create or replace function match_{{PREFIX}}crawled_pages (
   query_embedding vector(1536),
   match_count int default 10,
   filter jsonb DEFAULT '{}'::jsonb,
@@ -69,37 +69,37 @@ begin
     content,
     metadata,
     source_id,
-    1 - (crawled_pages.embedding <=> query_embedding) as similarity
-  from crawled_pages
+    1 - ({{PREFIX}}crawled_pages.embedding <=> query_embedding) as similarity
+  from {{PREFIX}}crawled_pages
   where metadata @> filter
     AND (source_filter IS NULL OR source_id = source_filter)
-  order by crawled_pages.embedding <=> query_embedding
+  order by {{PREFIX}}crawled_pages.embedding <=> query_embedding
   limit match_count;
 end;
 $$;
 
 -- Enable RLS on the crawled_pages table
-alter table crawled_pages enable row level security;
+alter table {{PREFIX}}crawled_pages enable row level security;
 
 -- Create a policy that allows anyone to read crawled_pages
-create policy "Allow public read access to crawled_pages"
-  on crawled_pages
+create policy "Allow public read access to {{PREFIX}}crawled_pages"
+  on {{PREFIX}}crawled_pages
   for select
   to public
   using (true);
 
 -- Enable RLS on the sources table
-alter table sources enable row level security;
+alter table {{PREFIX}}sources enable row level security;
 
 -- Create a policy that allows anyone to read sources
-create policy "Allow public read access to sources"
-  on sources
+create policy "Allow public read access to {{PREFIX}}sources"
+  on {{PREFIX}}sources
   for select
   to public
   using (true);
 
 -- Create the code_examples table
-create table code_examples (
+create table {{PREFIX}}code_examples (
     id bigserial primary key,
     url varchar not null,
     chunk_number integer not null,
@@ -114,20 +114,20 @@ create table code_examples (
     unique(url, chunk_number),
     
     -- Add foreign key constraint to sources table
-    foreign key (source_id) references sources(source_id)
+    foreign key (source_id) references {{PREFIX}}sources(source_id)
 );
 
 -- Create an index for better vector similarity search performance
-create index on code_examples using ivfflat (embedding vector_cosine_ops);
+create index on {{PREFIX}}code_examples using ivfflat (embedding vector_cosine_ops);
 
 -- Create an index on metadata for faster filtering
-create index idx_code_examples_metadata on code_examples using gin (metadata);
+create index idx_{{PREFIX}}code_examples_metadata on {{PREFIX}}code_examples using gin (metadata);
 
 -- Create an index on source_id for faster filtering
-CREATE INDEX idx_code_examples_source_id ON code_examples (source_id);
+CREATE INDEX idx_{{PREFIX}}code_examples_source_id ON {{PREFIX}}code_examples (source_id);
 
 -- Create a function to search for code examples
-create or replace function match_code_examples (
+create or replace function match_{{PREFIX}}code_examples (
   query_embedding vector(1536),
   match_count int default 10,
   filter jsonb DEFAULT '{}'::jsonb,
@@ -155,21 +155,21 @@ begin
     summary,
     metadata,
     source_id,
-    1 - (code_examples.embedding <=> query_embedding) as similarity
-  from code_examples
+    1 - ({{PREFIX}}code_examples.embedding <=> query_embedding) as similarity
+  from {{PREFIX}}code_examples
   where metadata @> filter
     AND (source_filter IS NULL OR source_id = source_filter)
-  order by code_examples.embedding <=> query_embedding
+  order by {{PREFIX}}code_examples.embedding <=> query_embedding
   limit match_count;
 end;
 $$;
 
 -- Enable RLS on the code_examples table
-alter table code_examples enable row level security;
+alter table {{PREFIX}}code_examples enable row level security;
 
 -- Create a policy that allows anyone to read code_examples
-create policy "Allow public read access to code_examples"
-  on code_examples
+create policy "Allow public read access to {{PREFIX}}code_examples"
+  on {{PREFIX}}code_examples
   for select
   to public
   using (true);
